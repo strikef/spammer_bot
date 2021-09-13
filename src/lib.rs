@@ -3,19 +3,25 @@ use std::sync::Mutex;
 
 use serenity::{
     async_trait,
-    model::{
-        channel::Message,
-        gateway::Ready,
-        id::{ChannelId, UserId},
-    },
+    model::{channel::Message, gateway::Ready, id::UserId},
     prelude::*,
 };
 
 mod parse;
 mod spam;
 
-async fn send_message(ctx: &Context, channel_id: ChannelId, content: impl std::fmt::Display) {
-    if let Err(why) = channel_id.say(&ctx.http, content).await {
+async fn send_message(ctx: &Context, msg: &Message, content: impl std::fmt::Display) {
+    if let Err(why) = msg.channel_id.say(&ctx.http, content).await {
+        println!("Error sending message: {:?}", why);
+    };
+}
+
+async fn reply_message(ctx: &Context, msg: &Message, content: impl std::fmt::Display) {
+    if let Err(why) = msg
+        .channel_id
+        .say(&ctx.http, format!("{} {}", msg.author, content))
+        .await
+    {
         println!("Error sending message: {:?}", why);
     };
 }
@@ -45,18 +51,19 @@ impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         if msg.content.starts_with("'sp") {
             if self.check_queue(msg.author.id) {
-                match parse::parse_command(msg.content.clone()) {
+                match parse::parse_command(&msg.content) {
                     Ok(args) => {
-                        spam::spam(ctx, msg.channel_id, args).await;
-                        self.dequeue(msg.author.id);
+                        spam::spam(ctx, &msg, args).await;
                     }
-                    Err(e) => send_message(&ctx, msg.channel_id, e).await,
+                    Err(e) => reply_message(&ctx, &msg, e).await,
                 }
+                self.dequeue(msg.author.id);
             } else {
                 println!(
                     "spam request from {} is blocked until previous request is completed",
                     msg.author.name
                 );
+                reply_message(&ctx, &msg, "please wait until your previous request ends").await
             }
         }
     }

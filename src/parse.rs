@@ -18,7 +18,7 @@ impl Display for CommandError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmtResult {
         match self.kind {
             CommandErrorKind::InvalidCommand => {
-                write!(f, "{} is not a valid command", self.user_value)
+                write!(f, "'{}' is not a valid command", self.user_value)
             }
             CommandErrorKind::NotProvided => write!(f, "command must be provided!"),
         }
@@ -52,7 +52,7 @@ impl Display for UsernameError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmtResult {
         write!(
             f,
-            "{} does not seem to exist or is not a valid username",
+            "'{}' does not seem to exist or is not a valid username",
             self.user_value
         )
     }
@@ -78,7 +78,7 @@ impl Display for IntervalError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmtResult {
         write!(
             f,
-            "{} can't be converted into numeric interval value",
+            "'{}' can't be converted into numeric interval value",
             self.user_value
         )
     }
@@ -99,7 +99,7 @@ impl Display for RepetitionError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmtResult {
         write!(
             f,
-            "{} can't be converted into integer repetition count value",
+            "'{}' can't be converted into integer repetition count value",
             self.user_value
         )
     }
@@ -120,7 +120,7 @@ impl Display for CountError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmtResult {
         write!(
             f,
-            "{} can't be converted into integer mention count value",
+            "'{}' can't be converted into integer mention count value",
             self.user_value
         )
     }
@@ -265,7 +265,7 @@ impl SpamArgs {
     }
 }
 
-pub fn parse_command(command: String) -> Result<SpamArgs, ParseError> {
+pub fn parse_command(command: &str) -> Result<SpamArgs, ParseError> {
     // use VecDeque, as args will be parsed (popped) from front
     let mut args: VecDeque<String> = command
         .split_whitespace()
